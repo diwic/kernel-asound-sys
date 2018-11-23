@@ -1,7 +1,8 @@
 [package]
-name = "kernel-sound-sys"
+name = "kernel-asound-sys"
 version = "0.1.0"
 authors = ["David Henningsson <diwic@ubuntu.com>"]
+description = "ALSA kernel bindings (bindgen generated). You probably want the ALSA crate instead."
 
 [dependencies]
 nix = "0.11"
