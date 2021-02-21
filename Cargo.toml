@@ -1,12 +1,13 @@
 [package]
 name = "kernel-asound-sys"
 version = "0.1.0"
-authors = ["David Henningsson <diwic@ubuntu.com>"]
+authors = ["David Henningsson <coding@diwic.se>"]
 description = "ALSA kernel bindings (bindgen generated). You probably want the ALSA crate instead."
+edition = "2018"
 
 [dependencies]
-nix = "0.11"
+nix = "0.20"
 
 [build-dependencies]
-bindgen = "0.43.1"
+bindgen = "0.57.0"
 regex = "1"

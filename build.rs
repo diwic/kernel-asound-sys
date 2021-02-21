@@ -23,13 +23,13 @@ fn do_regex(outfile: PathBuf) {
         if s2.starts_with("struct ") { s2 = s2.split_at(7).1; }
 
         let s = match &m[2] {
-            "" => { 
-                out2 += &format!("ioctl_none!({}, {}, {});\n", &m[1], &m[3], &m[4]);
-                continue; 
+            "" => {
+                out2 += &format!("nix::ioctl_none!({}, {}, {});\n", &m[1], &m[3], &m[4]);
+                continue;
             },
             "W" => {
-                if s2 == "int" { 
-                    out2 += &format!("ioctl_write_int!({}, {}, {});\n", &m[1], &m[3], &m[4]);
+                if s2 == "int" {
+                    out2 += &format!("nix::ioctl_write_int!({}, {}, {});\n", &m[1], &m[3], &m[4]);
                     continue;
                 }
                 "write_ptr"
@@ -39,10 +39,10 @@ fn do_regex(outfile: PathBuf) {
             _ => { panic!("m = {:?}", &m); }
         };
 
-        if s2 == "int" { s2 = "::std::os::raw::c_int" };
+        if s2 == "int" { s2 = "std::os::raw::c_int" };
         // else { panic!("m = {:?}, s2 = {:?}", &m, s2); }
 
-        out2 += &format!("ioctl_{}!({}, {}, {}, {});\n", s, &m[1], &m[3], &m[4], s2);
+        out2 += &format!("nix::ioctl_{}!({}, {}, {}, {});\n", s, &m[1], &m[3], &m[4], s2);
     }
 
     fs::write(outfile, out2).unwrap();
@@ -52,16 +52,11 @@ fn main() {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     do_regex(out_path.join("regex.rs"));
 
-    // The bindgen::Builder is the main entry point
-    // to bindgen, and lets you build up options for
-    // the resulting bindings.
     let bindings = bindgen::Builder::default()
-        // The input header we would like to generate
-        // bindings for.
+        .size_t_is_usize(true)
+        .whitelist_type("snd_.*")
         .header("wrapper.h")
-        // Finish the builder and generate the bindings.
         .generate()
-        // Unwrap the Result and panic on failure.
         .expect("Unable to generate bindings");
 
     // Write the bindings to the $OUT_DIR/bindings.rs file.
@@ -69,4 +64,3 @@ fn main() {
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
 }
-
