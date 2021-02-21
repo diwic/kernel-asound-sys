@@ -1,9 +1,15 @@
 [package]
 name = "kernel-asound-sys"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["David Henningsson <coding@diwic.se>"]
 description = "ALSA kernel bindings (bindgen generated). You probably want the ALSA crate instead."
 edition = "2018"
+readme = "README.md"
+repository = "https://github.com/diwic/kernel-asound-sys"
+documentation = "http://docs.rs/kernel-asound-sys"
+keywords = ["ALSA"]
+license = "Apache-2.0/MIT"
+categories = ["os::unix-apis", "external-ffi-bindings"]
 
 [dependencies]
 nix = "0.20"
