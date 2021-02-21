@@ -52,6 +52,7 @@ fn main() {
     let bindings = bindgen::Builder::default()
         .size_t_is_usize(true)
         .whitelist_type("snd_.*")
+        .whitelist_var("SNDRV_.*")
         .header("wrapper.h")
         .generate()
         .expect("Unable to generate bindings");
