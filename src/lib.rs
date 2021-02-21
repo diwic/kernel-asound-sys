@@ -12,11 +12,12 @@ mod tests {
     #[test]
     fn get_version() {
         use std::fs::File;
-        let c0 = File::open("/dev/snd/controlC0").unwrap();
+        let c0 = if let Ok(c0) = File::open("/dev/snd/controlC0") { c0 } else { return };
         use std::os::unix::io::AsRawFd;
         let fd = c0.as_raw_fd();
         let mut ver = 0;
         unsafe { SNDRV_CTL_IOCTL_PVERSION(fd, &mut ver).unwrap(); }
         println!("Protocol version is {}.{}.{}", ver >> 16, (ver >> 8) & 0xff, ver & 0xff);
+        assert_eq!(ver >> 16, 2);
     }
 }
