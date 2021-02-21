@@ -53,6 +53,8 @@ fn main() {
         .size_t_is_usize(true)
         .whitelist_type("snd_.*")
         .whitelist_var("SNDRV_.*")
+        // .blacklist_type("_bindgen_ty_.*") // Blacklisting these bogus types will remove SNDRV vars as well
+        .layout_tests(false)
         .header("wrapper.h")
         .generate()
         .expect("Unable to generate bindings");
