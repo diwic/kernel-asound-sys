@@ -16,30 +16,21 @@ fn do_regex(outfile: PathBuf) {
     // Convert stuff like: #define SNDRV_CTL_IOCTL_ELEM_LIST	_IOWR('U', 0x10, struct snd_ctl_elem_list)
     // \(([^,]+),([^,)]+),?([^)]*)\)
     for m in Regex::new(r"#define\s+(\w+)\s+_IO([WR]*)\(([^,)]+),\s*([^,)]+),?\s*([^,)]*)\)").unwrap().captures_iter(&asoundh) {
-        let mut s2: &str = &m[5];
-        if s2.starts_with("struct ") { s2 = s2.split_at(7).1; }
-
-        let s = match &m[2] {
-            "" => {
-                out2 += &format!("nix::ioctl_none!({}, {}, {});\n", &m[1], &m[3], &m[4]);
-                continue;
-            },
-            "W" => {
-                if s2 == "int" {
-                    out2 += &format!("nix::ioctl_write_int!({}, {}, {});\n", &m[1], &m[3], &m[4]);
-                    continue;
-                }
-                "write_ptr"
-            },
+        let rw = match &m[2] {
+            "" => "none",
             "R" => "read",
+            "W" => "write",
             "WR" => "readwrite",
-            _ => { panic!("m = {:?}", &m); }
+            _ => panic!("RW = {}", &m[2])
         };
+        let data: &str =
+            if rw == "none" { "" }
+            else if &m[5] == "int" { "std::os::raw::c_int" }
+            else if m[5].starts_with("struct ") { &m[5][7..] }
+            else { &m[5] };
 
-        if s2 == "int" { s2 = "std::os::raw::c_int" };
-        // else { panic!("m = {:?}, s2 = {:?}", &m, s2); }
-
-        out2 += &format!("nix::ioctl_{}!({}, {}, {}, {});\n", s, &m[1], &m[3], &m[4], s2);
+        out2 += &format!("ioctl_sys::ioctl!({} {} with b{}, {}{}{});\n", rw, &m[1], &m[3], &m[4],
+            if rw == "none" { "" } else { "; "}, data);
     }
 
     fs::write(outfile, out2).unwrap();

@@ -6,6 +6,12 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 include!(concat!(env!("OUT_DIR"), "/regex.rs"));
 
+pub fn io_res(r: std::os::raw::c_int) -> std::io::Result<()> {
+    if r == -1 {
+        Err(std::io::Error::last_os_error())
+    } else { Ok(()) }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -16,7 +22,7 @@ mod tests {
         use std::os::unix::io::AsRawFd;
         let fd = c0.as_raw_fd();
         let mut ver = 0;
-        unsafe { SNDRV_CTL_IOCTL_PVERSION(fd, &mut ver).unwrap(); }
+        io_res(unsafe { SNDRV_CTL_IOCTL_PVERSION(fd, &mut ver) }).unwrap();
         println!("Protocol version is {}.{}.{}", ver >> 16, (ver >> 8) & 0xff, ver & 0xff);
         assert_eq!(ver >> 16, 2);
     }

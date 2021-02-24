@@ -12,7 +12,7 @@ license = "Apache-2.0/MIT"
 categories = ["os::unix-apis", "external-ffi-bindings"]
 
 [dependencies]
-nix = "0.20"
+ioctl-sys = "0.6"
 
 [build-dependencies]
 bindgen = "0.57.0"
