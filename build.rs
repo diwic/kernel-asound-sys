@@ -18,8 +18,7 @@ fn do_regex(outfile: PathBuf) {
         }
 
         // Convert stuff like: #define SNDRV_CTL_IOCTL_ELEM_LIST	_IOWR('U', 0x10, struct snd_ctl_elem_list)
-        // \(([^,]+),([^,)]+),?([^)]*)\)
-        for m in Regex::new(r"#define\s+(\w+)\s+_IO([WR]*)\(([^,)]+),\s*([^,)]+),?\s*([^,)]*)\)").unwrap().captures_iter(&asoundh) {
+        for m in Regex::new(r"#define\s+(\w+)\s+_IO([WR]*)\s*\(([^,)]+),\s*([^,)]+),?\s*([^,)]*)\)").unwrap().captures_iter(&asoundh) {
             let rw = match &m[2] {
                 "" => "none",
                 "R" => "read",
