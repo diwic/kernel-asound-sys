@@ -3,34 +3,39 @@ use std::{env, fs};
 use std::path::PathBuf;
 
 fn do_regex(outfile: PathBuf) {
-    let asoundh = fs::read_to_string("/usr/include/sound/asound.h").unwrap();
+    // Same as wrapper.h
+    let files = ["/usr/include/sound/asound.h", "/usr/include/sound/asequencer.h", "/usr/include/sound/tlv.h"];
+
     let mut out2 = String::new();
+    for file in &files {
+        let asoundh = fs::read_to_string(file).unwrap();
 
-    // Handle stuff like: #define SNDRV_PCM_STATE_OPEN ((snd_pcm_state_t) 0)
-    // which bindgen does not handle (yet)
-    for m in Regex::new(r"#define\s+(\w+)\s+\(\((\w+)\)\s*(\d+)\)").unwrap().captures_iter(&asoundh) {
-        // eprintln!("{:?}", &m);
-        out2 += &format!("pub const {}: {} = {};\n", &m[1], &m[2], &m[3]);
-    }
+        // Handle stuff like: #define SNDRV_PCM_STATE_OPEN ((snd_pcm_state_t) 0)
+        // which bindgen does not handle (yet)
+        for m in Regex::new(r"#define\s+(\w+)\s+\(\((\w+)\)\s*(\d+)\)").unwrap().captures_iter(&asoundh) {
+            // eprintln!("{:?}", &m);
+            out2 += &format!("pub const {}: {} = {};\n", &m[1], &m[2], &m[3]);
+        }
 
-    // Convert stuff like: #define SNDRV_CTL_IOCTL_ELEM_LIST	_IOWR('U', 0x10, struct snd_ctl_elem_list)
-    // \(([^,]+),([^,)]+),?([^)]*)\)
-    for m in Regex::new(r"#define\s+(\w+)\s+_IO([WR]*)\(([^,)]+),\s*([^,)]+),?\s*([^,)]*)\)").unwrap().captures_iter(&asoundh) {
-        let rw = match &m[2] {
-            "" => "none",
-            "R" => "read",
-            "W" => "write",
-            "WR" => "readwrite",
-            _ => panic!("RW = {}", &m[2])
-        };
-        let data: &str =
-            if rw == "none" { "" }
-            else if &m[5] == "int" { "std::os::raw::c_int" }
-            else if m[5].starts_with("struct ") { &m[5][7..] }
-            else { &m[5] };
+        // Convert stuff like: #define SNDRV_CTL_IOCTL_ELEM_LIST	_IOWR('U', 0x10, struct snd_ctl_elem_list)
+        // \(([^,]+),([^,)]+),?([^)]*)\)
+        for m in Regex::new(r"#define\s+(\w+)\s+_IO([WR]*)\(([^,)]+),\s*([^,)]+),?\s*([^,)]*)\)").unwrap().captures_iter(&asoundh) {
+            let rw = match &m[2] {
+                "" => "none",
+                "R" => "read",
+                "W" => "write",
+                "WR" => "readwrite",
+                _ => panic!("RW = {}", &m[2])
+            };
+            let data: &str =
+                if rw == "none" { "" }
+                else if &m[5] == "int" { "std::os::raw::c_int" }
+                else if m[5].starts_with("struct ") { &m[5][7..] }
+                else { &m[5] };
 
-        out2 += &format!("ioctl_sys::ioctl!({} {} with b{}, {}{}{});\n", rw, &m[1], &m[3], &m[4],
-            if rw == "none" { "" } else { "; "}, data);
+            out2 += &format!("ioctl_sys::ioctl!({} {} with b{}, {}{}{});\n", rw, &m[1], &m[3], &m[4],
+                if rw == "none" { "" } else { "; "}, data);
+        }
     }
 
     fs::write(outfile, out2).unwrap();
