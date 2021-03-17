@@ -12,7 +12,7 @@ license = "Apache-2.0/MIT"
 categories = ["os::unix-apis", "external-ffi-bindings"]
 
 [dependencies]
-ioctl-sys = "0.6"
+ioctl-sys = { version = "0.7.1", path = "../ioctl/ioctl-sys" }
 
 [build-dependencies]
 bindgen = "0.57.0"

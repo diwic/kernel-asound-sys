@@ -2,6 +2,18 @@ use regex::Regex;
 use std::{env, fs};
 use std::path::PathBuf;
 
+// These do not contain any fields that are copied from user to kernel, so they can be initialized to zero.
+const READ0_IOCTL: [&str; 8] = [
+    "SNDRV_CTL_IOCTL_CARD_INFO",
+    "SNDRV_CTL_IOCTL_PVERSION",
+    "SNDRV_PCM_IOCTL_INFO",
+    "SNDRV_PCM_IOCTL_PVERSION",
+    "SNDRV_RAWMIDI_IOCTL_INFO",
+    "SNDRV_RAWMIDI_IOCTL_PVERSION",
+    "SNDRV_TIMER_IOCTL_INFO",
+    "SNDRV_TIMER_IOCTL_PVERSION"
+];
+
 fn do_regex(outfile: PathBuf) {
     // Same as wrapper.h
     let files = ["/usr/include/sound/asound.h", "/usr/include/sound/asequencer.h", "/usr/include/sound/tlv.h"];
@@ -21,7 +33,7 @@ fn do_regex(outfile: PathBuf) {
         for m in Regex::new(r"#define\s+(\w+)\s+_IO([WR]*)\s*\(([^,)]+),\s*([^,)]+),?\s*([^,)]*)\)").unwrap().captures_iter(&asoundh) {
             let rw = match &m[2] {
                 "" => "none",
-                "R" => "read",
+                "R" => if READ0_IOCTL.iter().any(|&x| x == &m[1]) { "read0" } else { "read" },
                 "W" => "write",
                 "WR" => "readwrite",
                 _ => panic!("RW = {}", &m[2])
@@ -32,7 +44,7 @@ fn do_regex(outfile: PathBuf) {
                 else if m[5].starts_with("struct ") { &m[5][7..] }
                 else { &m[5] };
 
-            out2 += &format!("ioctl_sys::ioctl!({} {} with b{}, {}{}{});\n", rw, &m[1], &m[3], &m[4],
+            out2 += &format!("ioctl_sys::ioctl!(try {} {} with b{}, {}{}{});\n", rw, &m[1], &m[3], &m[4],
                 if rw == "none" { "" } else { "; "}, data);
         }
     }
