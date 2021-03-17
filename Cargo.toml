@@ -1,6 +1,6 @@
 [package]
 name = "kernel-asound-sys"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["David Henningsson <coding@diwic.se>"]
 description = "ALSA kernel bindings (bindgen generated). You probably want the ALSA crate instead."
 edition = "2018"
